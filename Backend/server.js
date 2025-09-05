@@ -1,7 +1,3 @@
-
-
-
-// server.js
 import express from "express";
 import multer from "multer";
 import fs from "fs";
@@ -19,15 +15,12 @@ dotenv.config();
 const app = express();
 const upload = multer({ dest: path.join(__dirname, '../uploads/') });
 
-// In-memory storage for documents and chat sessions
 const documentStore = new Map();
 const chatSessions = new Map();
 
-// Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Gemini API key from .env
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
@@ -35,7 +28,6 @@ if (!GEMINI_API_KEY) {
   process.exit(1);
 }
 
-// --- Gemini API call function ---
 async function askGemini(prompt) {
   const response = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" +
@@ -53,14 +45,12 @@ async function askGemini(prompt) {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 }
 
-// --- Upload & process PDF ---
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    // Read PDF
     const pdfBuffer = fs.readFileSync(req.file.path);
     const pdfData = await pdfParse(pdfBuffer);
     const text = pdfData.text;
@@ -69,10 +59,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       return res.status(400).json({ error: "Empty PDF text" });
     }
 
-    // Generate unique document ID
     const docId = Date.now().toString();
     
-    // Ask Gemini for comprehensive legal analysis
     const prompt = `
       You are an expert legal AI assistant specializing in contract and legal document analysis.
       
@@ -116,23 +104,15 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     const aiResponse = await askGemini(prompt);
 
-    // Parse AI response
     let analysis;
     try {
-      // Clean the response - remove any markdown formatting
       let cleanResponse = aiResponse.trim();
-      
-      // Remove markdown code blocks with more robust regex
       cleanResponse = cleanResponse.replace(/^```json\s*\n?/, '').replace(/\n?\s*```$/, '');
       cleanResponse = cleanResponse.replace(/^```\s*\n?/, '').replace(/\n?\s*```$/, '');
-      
-      // Remove any leading/trailing whitespace and newlines
       cleanResponse = cleanResponse.trim();
-      
       console.log('Cleaned response length:', cleanResponse.length);
       console.log('First 100 chars:', cleanResponse.substring(0, 100));
       console.log('Last 100 chars:', cleanResponse.substring(cleanResponse.length - 100));
-      
       analysis = JSON.parse(cleanResponse);
       console.log('✅ Successfully parsed AI response');
     } catch (e) {
@@ -140,10 +120,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       console.log('Raw AI response length:', aiResponse.length);
       console.log('First 500 chars:', aiResponse.substring(0, 500));
       console.log('Last 500 chars:', aiResponse.substring(aiResponse.length - 500));
-      
-      // Try alternative parsing approach
       try {
-        // Look for JSON content between ```json and ```
         const jsonMatch = aiResponse.match(/```json\s*\n([\s\S]*?)\n\s*```/);
         if (jsonMatch && jsonMatch[1]) {
           analysis = JSON.parse(jsonMatch[1].trim());
@@ -153,8 +130,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
         }
       } catch (e2) {
         console.error('❌ Alternative parsing also failed:', e2.message);
-        
-        // Create a fallback analysis structure
         analysis = {
           summary: {
             overview: aiResponse,
@@ -174,7 +149,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       }
     }
 
-    // Store document and analysis
     documentStore.set(docId, {
       id: docId,
       originalText: text,
@@ -183,10 +157,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       fileName: req.file.originalname
     });
 
-    // Initialize chat session
     chatSessions.set(docId, []);
 
-    // Cleanup uploaded file
     fs.unlinkSync(req.file.path);
 
     res.json({
@@ -200,9 +172,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// ===== CHAT BOT API ENDPOINTS =====
-
-// Chat endpoint for document queries
 app.post("/api/chat/:documentId", async (req, res) => {
   try {
     const { documentId } = req.params;
@@ -217,10 +186,8 @@ app.post("/api/chat/:documentId", async (req, res) => {
       return res.status(404).json({ error: "Document not found" });
     }
 
-    // Get chat history
     const chatHistory = chatSessions.get(documentId) || [];
     
-    // Create context-aware prompt
     const chatPrompt = `
       You are a legal AI assistant helping with questions about a specific legal document.
       
@@ -247,7 +214,6 @@ app.post("/api/chat/:documentId", async (req, res) => {
 
     const aiResponse = await askGemini(chatPrompt);
 
-    // Store chat message
     const chatMessage = {
       role: "user",
       content: question,
@@ -277,9 +243,6 @@ app.post("/api/chat/:documentId", async (req, res) => {
   }
 });
 
-// ===== DOCUMENT ANALYSIS API ENDPOINTS =====
-
-// Get complete document analysis
 app.get("/api/document/:documentId", (req, res) => {
   const { documentId } = req.params;
   const document = documentStore.get(documentId);
@@ -297,7 +260,6 @@ app.get("/api/document/:documentId", (req, res) => {
   });
 });
 
-// Get only document summary
 app.get("/api/document/:documentId/summary", (req, res) => {
   const { documentId } = req.params;
   const document = documentStore.get(documentId);
@@ -313,7 +275,6 @@ app.get("/api/document/:documentId/summary", (req, res) => {
   });
 });
 
-// Get only clauses analysis
 app.get("/api/document/:documentId/clauses", (req, res) => {
   const { documentId } = req.params;
   const document = documentStore.get(documentId);
@@ -329,7 +290,6 @@ app.get("/api/document/:documentId/clauses", (req, res) => {
   });
 });
 
-// Get only risk assessment
 app.get("/api/document/:documentId/risks", (req, res) => {
   const { documentId } = req.params;
   const document = documentStore.get(documentId);
@@ -345,7 +305,6 @@ app.get("/api/document/:documentId/risks", (req, res) => {
   });
 });
 
-// Get only key terms
 app.get("/api/document/:documentId/terms", (req, res) => {
   const { documentId } = req.params;
   const document = documentStore.get(documentId);
@@ -361,7 +320,6 @@ app.get("/api/document/:documentId/terms", (req, res) => {
   });
 });
 
-// Get all documents list
 app.get("/api/documents", (req, res) => {
   const documents = Array.from(documentStore.values()).map(doc => ({
     id: doc.id,
@@ -378,7 +336,6 @@ app.get("/api/documents", (req, res) => {
   });
 });
 
-// Test endpoint to check parsing
 app.post("/api/test-parse", (req, res) => {
   const { testResponse } = req.body;
   
@@ -387,7 +344,6 @@ app.post("/api/test-parse", (req, res) => {
   }
   
   try {
-    // Test the same parsing logic
     let cleanResponse = testResponse.trim();
     cleanResponse = cleanResponse.replace(/^```json\s*\n?/, '').replace(/\n?\s*```$/, '');
     cleanResponse = cleanResponse.replace(/^```\s*\n?/, '').replace(/\n?\s*```$/, '');
@@ -400,7 +356,6 @@ app.post("/api/test-parse", (req, res) => {
       cleanResponse: cleanResponse.substring(0, 200) + '...'
     });
   } catch (e) {
-    // Try alternative method
     try {
       const jsonMatch = testResponse.match(/```json\s*\n([\s\S]*?)\n\s*```/);
       if (jsonMatch && jsonMatch[1]) {
@@ -424,7 +379,6 @@ app.post("/api/test-parse", (req, res) => {
   }
 });
 
-// Get chat history for a document
 app.get("/api/chat/:documentId/history", (req, res) => {
   const { documentId } = req.params;
   const chatHistory = chatSessions.get(documentId) || [];
@@ -437,7 +391,6 @@ app.get("/api/chat/:documentId/history", (req, res) => {
   });
 });
 
-// Clear chat history for a document
 app.delete("/api/chat/:documentId/history", (req, res) => {
   const { documentId } = req.params;
   
@@ -454,7 +407,6 @@ app.delete("/api/chat/:documentId/history", (req, res) => {
   });
 });
 
-// Get all chat sessions
 app.get("/api/chat/sessions", (req, res) => {
   const sessions = Array.from(chatSessions.entries()).map(([docId, history]) => ({
     documentId: docId,
@@ -473,15 +425,12 @@ app.get("/api/chat/sessions", (req, res) => {
   });
 });
 
-// Legacy endpoints for backward compatibility
 app.post("/chat/:documentId", async (req, res) => {
-  // Redirect to new API endpoint
   req.url = req.url.replace('/chat/', '/api/chat/');
   return app._router.handle(req, res);
 });
 
 app.get("/chat/:documentId", (req, res) => {
-  // Redirect to new API endpoint
   req.url = req.url.replace('/chat/', '/api/chat/') + '/history';
   return app._router.handle(req, res);
 });
