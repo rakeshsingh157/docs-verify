@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        
+        .features-overview {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .feature-icon {
+            font-size: 1.2em;
+        }
+        
+        .demo-info {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .document-section {
+            padding: 30px;
+            border-right: 2px solid #e0e0e0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 600px;
+        }
+        
+        .chat-section {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            min-height: 600px;
+        }
+        
+        .section-header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .section-header h2 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1.5em;
+        }
+        
+        .section-header p {
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e8f2ff;
+        }
+        
+        .upload-icon {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .analysis-result {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #eee;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 500px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            max-height: 400px;
+            background: #fafafa;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .message.assistant {
+            background: white;
+            border: 1px solid #ddd;
+            margin-right: auto;
+        }
+        
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 1em;
+        }
+        
+        .chat-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .clause-item {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .clause-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+        
+        .clause-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .importance-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .importance-badge.high {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .importance-badge.medium {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .importance-badge.low {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .summary-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .highlight {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .overview-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f4ff;
+            border-radius: 6px;
+        }
+        
+        .overview-text {
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+        
+        .clause-description, .term-explanation, .term-impact {
+            margin: 12px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .description-text, .explanation-text, .impact-text {
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+        
+        .benefits, .risks {
+            margin: 12px 0;
+            padding: 12px;
+            border-radius: 6px;
+        }
+        
+        .benefits {
+            background: #e8f5e8;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .benefits ul {
+            margin: 8px 0 0 0;
+            padding-left: 20px;
+        }
+        
+        .benefits li {
+            margin: 5px 0;
+            color: #2e7d32;
+        }
+        
+        .risks {
+            background: #ffebee;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .risks ul {
+            margin: 8px 0 0 0;
+            padding-left: 20px;
+        }
+        
+        .risks li {
+            margin: 5px 0;
+            color: #c62828;
+        }
+        
+        .risk-assessment {
+            border: 2px solid #ff9800;
+            background: #fff8e1;
+        }
+        
+        .risk-level {
+            margin: 12px 0;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+        }
+        
+        .risk-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .risk-badge.high {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        
+        .risk-badge.medium {
+            background: #ffe0b2;
+            color: #ef6c00;
+        }
+        
+        .risk-badge.low {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        
+        .critical-points, .recommendations {
+            margin: 12px 0;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+        }
+        
+        .critical-points ul, .recommendations ul {
+            margin: 8px 0 0 0;
+            padding-left: 20px;
+        }
+        
+        .critical-points li, .recommendations li {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+        
+        .high-importance {
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .medium-importance {
+            border-left: 5px solid #f39c12;
+        }
+        
+        .low-importance {
+            border-left: 5px solid #27ae60;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .document-section {
+                border-right: none;
+                border-bottom: 2px solid #e0e0e0;
+            }
+            
+            .features-overview {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .feature-item {
+                width: 200px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚖️ Legal AI Assistant</h1>
+            <p>Upload legal documents and get comprehensive analysis with interactive chat</p>
+            <div class="features-overview">
+                <div class="feature-item">
+                    <span class="feature-icon">📋</span>
+                    <span>Complete Document Summary</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📝</span>
+                    <span>Clause-by-Clause Analysis</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">💬</span>
+                    <span>Interactive Chat Support</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">⚠️</span>
+                    <span>Risk Assessment</span>
+                </div>
+            </div>
+            
+            <div class="demo-info">
+                <p><strong>How it works:</strong> Upload a PDF → Get instant analysis → Chat with AI about your document</p>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- LEFT SIDE: Document Analysis -->
+            <div class="document-section">
+                <div class="section-header">
+                    <h2>📄 Document Analysis</h2>
+                    <p>Upload your legal document to see comprehensive analysis</p>
+                </div>
+                
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <p>Click to upload or drag & drop your PDF</p>
+                    <p style="color: #666; font-size: 0.9em;">Supported: PDF files only</p>
+                </div>
+                <input type="file" id="fileInput" class="file-input" accept=".pdf" onchange="uploadFile()">
+                
+                <div id="uploadStatus"></div>
+                <div id="analysisResult" class="analysis-result hidden"></div>
+            </div>
+            
+            <!-- RIGHT SIDE: Chat Bot -->
+            <div class="chat-section">
+                <div class="section-header">
+                    <h2>💬 Legal Assistant Chat</h2>
+                    <p>Ask questions about your uploaded document</p>
+                </div>
+                
+                <div class="chat-container">
+                    <div id="chatMessages" class="chat-messages">
+                        <div class="message assistant">
+                            <p>👋 <strong>Welcome!</strong> Upload a legal document on the left, and I'll help you understand it better. You can ask me about:</p>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li>Specific clauses and their meaning</li>
+                                <li>Risks and benefits</li>
+                                <li>Legal terms explanation</li>
+                                <li>Practical implications</li>
+                                <li>Any concerns you have</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Ask a question about your document..." disabled>
+                        <button class="btn" onclick="sendMessage()" disabled id="sendBtn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDocumentId = null;
+        
+        // File upload handling
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            if (file.type !== 'application/pdf') {
+                showStatus('Please select a PDF file.', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            showStatus('Uploading and analyzing document...', 'loading');
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showStatus('Error: ' + data.error, 'error');
+                } else {
+                    currentDocumentId = data.documentId;
+                    showStatus('Document analyzed successfully!', 'success');
+                    displayAnalysis(data.analysis);
+                    enableChat();
+                }
+            })
+            .catch(error => {
+                showStatus('Upload failed: ' + error.message, 'error');
+            });
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+        
+        function displayAnalysis(analysis) {
+            const resultDiv = document.getElementById('analysisResult');
+            resultDiv.classList.remove('hidden');
+            
+            let html = '<h3>📋 Complete Document Analysis</h3>';
+            
+            // Debug: Show raw analysis if structure is unexpected
+            if (!analysis || typeof analysis !== 'object') {
+                html += `
+                    <div class="clause-item">
+                        <div class="clause-title">⚠️ Analysis Data Issue</div>
+                        <p>Raw analysis data: ${JSON.stringify(analysis)}</p>
+                    </div>
+                `;
+                resultDiv.innerHTML = html;
+                return;
+            }
+            
+            // Document Summary Section
+            if (analysis.summary) {
+                html += `
+                    <div class="clause-item">
+                        <div class="clause-title">📄 Document Summary</div>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <strong>📋 Document Type:</strong> 
+                                <span class="highlight">${analysis.summary.documentType || 'N/A'}</span>
+                            </div>
+                            <div class="summary-item">
+                                <strong>👥 Parties Involved:</strong> 
+                                <span class="highlight">${analysis.summary.parties || 'N/A'}</span>
+                            </div>
+                            <div class="summary-item">
+                                <strong>🎯 Purpose:</strong> 
+                                <span class="highlight">${analysis.summary.purpose || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="overview-section">
+                            <strong>📖 Complete Overview:</strong>
+                            <div class="overview-text">${formatText(analysis.summary.overview || 'N/A')}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Key Clauses Section
+            if (analysis.clauses && analysis.clauses.length > 0) {
+                html += '<h4>📝 Detailed Clause Analysis</h4>';
+                analysis.clauses.forEach((clause, index) => {
+                    const importanceClass = clause.importance?.toLowerCase() || 'medium';
+                    html += `
+                        <div class="clause-item ${importanceClass}-importance">
+                            <div class="clause-header">
+                                <div class="clause-title">${index + 1}. ${clause.title}</div>
+                                <div class="importance-badge ${importanceClass}">${clause.importance || 'Medium'} Priority</div>
+                            </div>
+                            <div class="clause-description">
+                                <strong>📝 What it means:</strong>
+                                <div class="description-text">${formatText(clause.description)}</div>
+                            </div>
+                            <div class="benefits">
+                                <strong>✅ Benefits & Advantages:</strong>
+                                <ul>${clause.benefits ? clause.benefits.map(benefit => `<li>${formatText(benefit)}</li>`).join('') : '<li>No specific benefits mentioned</li>'}</ul>
+                            </div>
+                            <div class="risks">
+                                <strong>⚠️ Risks & Potential Losses:</strong>
+                                <ul>${clause.risks ? clause.risks.map(risk => `<li>${formatText(risk)}</li>`).join('') : '<li>No specific risks mentioned</li>'}</ul>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            // Key Terms Section
+            if (analysis.keyTerms && analysis.keyTerms.length > 0) {
+                html += '<h4>🔑 Important Legal Terms Explained</h4>';
+                analysis.keyTerms.forEach(term => {
+                    html += `
+                        <div class="clause-item">
+                            <div class="clause-title">${term.term}</div>
+                            <div class="term-explanation">
+                                <strong>📚 Simple Explanation:</strong>
+                                <div class="explanation-text">${formatText(term.explanation)}</div>
+                            </div>
+                            <div class="term-impact">
+                                <strong>💡 Impact on You:</strong>
+                                <div class="impact-text">${formatText(term.impact)}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            // Risk Assessment Section
+            if (analysis.riskAssessment) {
+                const riskLevel = analysis.riskAssessment.overallRisk?.toLowerCase() || 'medium';
+                html += `
+                    <div class="clause-item risk-assessment ${riskLevel}-risk">
+                        <div class="clause-title">⚠️ Overall Risk Assessment</div>
+                        <div class="risk-level">
+                            <strong>Risk Level:</strong> 
+                            <span class="risk-badge ${riskLevel}">${analysis.riskAssessment.overallRisk}</span>
+                        </div>
+                        <div class="critical-points">
+                            <strong>🚨 Critical Points to Watch:</strong>
+                            <ul>${analysis.riskAssessment.criticalPoints ? analysis.riskAssessment.criticalPoints.map(point => `<li>${formatText(point)}</li>`).join('') : '<li>No critical points identified</li>'}</ul>
+                        </div>
+                        <div class="recommendations">
+                            <strong>💡 Practical Recommendations:</strong>
+                            <ul>${analysis.riskAssessment.recommendations ? analysis.riskAssessment.recommendations.map(rec => `<li>${formatText(rec)}</li>`).join('') : '<li>No specific recommendations</li>'}</ul>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // If no structured data found, show raw analysis
+            if (!analysis.summary && !analysis.clauses && !analysis.riskAssessment && !analysis.keyTerms) {
+                html += `
+                    <div class="clause-item">
+                        <div class="clause-title">📄 Raw Analysis Data</div>
+                        <div class="raw-analysis">
+                            <pre style="white-space: pre-wrap; background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(analysis, null, 2)}</pre>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Function to format text with bold markers
+        function formatText(text) {
+            if (!text) return 'N/A';
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+        }
+        
+        function enableChat() {
+            document.getElementById('chatInput').disabled = false;
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('chatInput').focus();
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message || !currentDocumentId) return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Disable input while processing
+            input.disabled = true;
+            document.getElementById('sendBtn').disabled = true;
+            
+            // Send to server
+            fetch(`/api/chat/${currentDocumentId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    addMessage('Error: ' + data.error, 'assistant');
+                } else {
+                    addMessage(data.answer, 'assistant');
+                }
+            })
+            .catch(error => {
+                addMessage('Failed to get response: ' + error.message, 'assistant');
+            })
+            .finally(() => {
+                input.disabled = false;
+                document.getElementById('sendBtn').disabled = false;
+                input.focus();
+            });
+        }
+        
+        function addMessage(content, role) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.innerHTML = `<p>${formatText(content)}</p>`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // Enter key support
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Drag and drop support
+        const uploadArea = document.querySelector('.upload-area');
+        
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                uploadFile();
+            }
+        });
+    </script>
+</body>
+</html>
