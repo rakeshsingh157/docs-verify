@@ -1,0 +1,36 @@
+{
+  "name": "legal-ai-poc",
+  "version": "1.0.0",
+  "description": "Legal AI Assistant for document analysis and chat",
+  "main": "Backend/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "cd Backend && npm start",
+    "dev": "cd Backend && npm run dev",
+    "install-deps": "cd Backend && npm install"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.8.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^3.3.2",
+    "pdf-parse": "^1.1.1",
+    "pdf-parse-fixed": "^1.1.1",
+    "pdfjs-dist": "^5.4.149"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "legal",
+    "ai",
+    "document-analysis",
+    "pdf",
+    "chatbot"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
